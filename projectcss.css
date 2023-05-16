@@ -1,0 +1,25 @@
+body{
+    margin: 0;
+}
+.container{
+    box-sizing: border-box;
+    border: 2px solid blanchedalmond;
+    background-color:greenyellow;
+    overflow: auto;
+}
+.container a{
+    float: left;
+    width: 20%;
+    text-align: center;
+    transition: all 0.3s ease;
+    color: white;
+    font-size: 36px;
+
+}
+.container a:hover{
+    background-color:black;
+
+}
+.action{
+        background-color:green ;
+}
