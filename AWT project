@@ -1,1 +1,319 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.*;
+
+public class BillingSystemApp extends JFrame {
+
+    private JTextField tfUsername;
+    private JTextField pfPassword;
+    private JButton btnConnect;
+    private JTextField mail;
+    private JTextField userID;
+    private JTextField phone;
+    private JTextArea displayArea;
+    private JButton btnDisplay;
+    private JButton btnDelete;
+    private JButton btnSearch;
+    private JButton btnUpdate;
+
+    public BillingSystemApp() {
+        setTitle("Billing System");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(500, 300);
+        setLocationRelativeTo(null);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(14, 10, 10, 10));
+
+        JLabel lblUsername = new JLabel("name:");
+        tfUsername = new JTextField();
+        JLabel lblPassword = new JLabel("Pass:");
+        pfPassword = new JTextField();
+        JLabel Email = new JLabel("Email:");
+        mail = new JTextField();
+        JLabel userid = new JLabel("ID:");
+        userID = new JTextField();
+        JLabel phoneNo = new JLabel("Phone_NO:");
+        phone = new JTextField();
+        btnConnect = new JButton("Connect");
+        displayArea = new JTextArea();
+        btnDisplay = new JButton("Display");
+        btnDelete = new JButton("Delete");
+        btnSearch = new JButton("Search");
+        btnUpdate = new JButton("Update");
+
+        panel.add(lblUsername);
+        panel.add(tfUsername);
+        panel.add(lblPassword);
+        panel.add(pfPassword);
+        panel.add(Email);
+        panel.add(mail);
+        panel.add(userid);
+        panel.add(userID);
+        panel.add(phoneNo);
+        panel.add(phone);
+        panel.add(new JLabel());
+        // Empty label for spacing
+        panel.add(btnConnect);
+
+        panel.add(new JLabel());
+        panel.add(btnDisplay);
+
+        panel.add(new JLabel());
+        panel.add(btnDelete);
+
+        panel.add(new JLabel());
+        panel.add(btnSearch);
+
+        panel.add(new JLabel());
+        panel.add(btnUpdate);
+
+        btnConnect.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    connectToDatabase();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+
+        btnDisplay.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    displayRecords();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        btnDelete.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    deleteRecord();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        btnSearch.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    searchRecord();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        btnUpdate.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    updateRecord();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        JPanel displayPanel = new JPanel();
+        displayPanel.setLayout(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(displayArea);
+        displayPanel.add(scrollPane, BorderLayout.CENTER);
+
+        add(panel, BorderLayout.NORTH);
+        add(displayPanel, BorderLayout.CENTER);
+    }
+
+    private void connectToDatabase() throws SQLException {
+        String name = tfUsername.getText();
+        String pass = pfPassword.getText();
+        String Email = mail.getText();
+        String userid = userID.getText();
+        String phoneNo = phone.getText();
+        String url = "jdbc:mysql://127.0.0.1:3306/project1";
+        String username = "root";
+        String password = "Tushar#1234";
+        String driver = "com.mysql.cj.jdbc.Driver";
+
+        Connection connection = null;
+        try {
+            Class.forName(driver);
+            connection = DriverManager.getConnection(url, username, password);
+            String insertItemQuery = "INSERT INTO userinfo (Name, Pass, Email, Id, PhoneNo) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement itemStatement = connection.prepareStatement(insertItemQuery);
+
+            itemStatement.setString(1, name);
+            itemStatement.setString(2, pass);
+            itemStatement.setString(3, Email);
+            itemStatement.setString(4, userid);
+            itemStatement.setString(5, phoneNo);
+
+            itemStatement.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Connected to the database!");
+            connection.close();
+        } catch (ClassNotFoundException | SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Failed to connect to the database: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void displayRecords() throws SQLException {
+        String url = "jdbc:mysql://localhost:3306/project1";
+        String username = "root";
+        String password = "Tushar#1234";
+
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            String selectQuery = "SELECT * FROM userinfo";
+            PreparedStatement statement = connection.prepareStatement(selectQuery);
+            ResultSet resultSet = statement.executeQuery();
+
+            StringBuilder sb = new StringBuilder();
+            while (resultSet.next()) {
+                String name = resultSet.getString("Name");
+                String Pass = resultSet.getString("Pass");
+                String email = resultSet.getString("Email");
+                String id = resultSet.getString("Id");
+                String phoneNo = resultSet.getString("PhoneNo");
+
+                sb.append("Name: ").append(name).append("\n");
+                sb.append("Pass: ").append(Pass).append("\n");
+                sb.append("Email: ").append(email).append("\n");
+                sb.append("ID: ").append(id).append("\n");
+                sb.append("Phone No: ").append(phoneNo).append("\n\n");
+            }
+
+            if (sb.length() > 0) {
+                displayArea.setText(sb.toString());
+            } else {
+                displayArea.setText("No records found.");
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Failed to fetch records: " + ex.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteRecord() throws SQLException {
+        String id = JOptionPane.showInputDialog(this, "Enter ID to delete:");
+        if (id != null) {
+            String url = "jdbc:mysql://localhost:3306/project1";
+            String username = "root";
+            String password = "Tushar#1234";
+
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String deleteQuery = "DELETE FROM userinfo WHERE Id = ?";
+                PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
+                deleteStatement.setString(1, id);
+                int rowsAffected = deleteStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(this, "Record deleted successfully!");
+                } else {
+                    JOptionPane.showMessageDialog(this, "No record found with the given ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Failed to delete record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void searchRecord() throws SQLException {
+        String id = JOptionPane.showInputDialog(this, "Enter ID to search:");
+        if (id != null) {
+            String url = "jdbc:mysql://localhost:3306/project1";
+            String username = "root";
+            String password = "Tushar#1234";
+
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String selectQuery = "SELECT * FROM userinfo WHERE Id = ?";
+                PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                selectStatement.setString(1, id);
+                ResultSet resultSet = selectStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    String name = resultSet.getString("Name");
+                    String pass = resultSet.getString("Pass");
+                    String email = resultSet.getString("Email");
+                    String phoneNo = resultSet.getString("PhoneNo");
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Name: ").append(name).append("\n");
+                    sb.append("Pass: ").append(pass).append("\n");
+                    sb.append("Email: ").append(email).append("\n");
+                    sb.append("ID: ").append(id).append("\n");
+                    sb.append("Phone No: ").append(phoneNo).append("\n\n");
+
+                    displayArea.setText(sb.toString());
+                } else {
+                    JOptionPane.showMessageDialog(this, "No record found with the given ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Failed to search for record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void updateRecord() throws SQLException {
+        String id = JOptionPane.showInputDialog(this, "Enter ID to update:");
+        if (id != null) {
+            String url = "jdbc:mysql://localhost:3306/project1";
+            String username = "root";
+            String password = "Tushar#1234";
+
+            try (Connection connection = DriverManager.getConnection(url, username, password)) {
+                String selectQuery = "SELECT * FROM userinfo WHERE Id = ?";
+                PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+                selectStatement.setString(1, id);
+                ResultSet resultSet = selectStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    String name = resultSet.getString("Name");
+                    String pass = resultSet.getString("Pass");
+                    String email = resultSet.getString("Email");
+                    String phoneNo = resultSet.getString("PhoneNo");
+
+                    JTextField tfNewName = new JTextField(name);
+                    JTextField tfNewPass = new JTextField(pass);
+                    JTextField tfNewEmail = new JTextField(email);
+                    JTextField tfNewPhoneNo = new JTextField(phoneNo);
+
+                    Object[] message = {
+                            "New Name:", tfNewName,
+                            "New Pass:", tfNewPass,
+                            "New Email:", tfNewEmail,
+                            "New Phone No:", tfNewPhoneNo
+                    };
+
+                    int option = JOptionPane.showConfirmDialog(this, message, "Update Record", JOptionPane.OK_CANCEL_OPTION);
+                    if (option == JOptionPane.OK_OPTION) {
+                        String updateQuery = "UPDATE userinfo SET Name = ?, Pass = ?, Email = ?, PhoneNo = ? WHERE Id = ?";
+                        PreparedStatement updateStatement = connection.prepareStatement(updateQuery);
+                        updateStatement.setString(1, tfNewName.getText());
+                        updateStatement.setString(2, tfNewPass.getText());
+                        updateStatement.setString(3, tfNewEmail.getText());
+                        updateStatement.setString(4, tfNewPhoneNo.getText());
+                        updateStatement.setString(5, id);
+                        updateStatement.executeUpdate();
+                        JOptionPane.showMessageDialog(this, "Record updated successfully!");
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "No record found with the given ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Failed to update record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new BillingSystemApp().setVisible(true);
+            }
+        });
+    }
+}
 
